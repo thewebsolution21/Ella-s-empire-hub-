@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Settings | Ella's Admin</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <div class="admin-wrapper">
+    <div class="sidebar">
+      <h2>👑 Ella's Admin</h2>
+      <a href="chat.html">Live Support</a>
+      <a href="orders.html">Orders</a>
+      <a href="products.html">Products (Inventory)</a>
+      <a href="payments.html" class="active">Payment Settings</a>
+      <a href="../index.html" class="logout">Logout ↗</a>
+    </div>
+
+    <div class="main-content">
+      <h1>Payment Settings</h1>
+      <p class="page-desc">These details will automatically show up on the customer checkout page.</p>
+
+      <div class="admin-card" style="max-width: 600px;">
+        <form id="paymentForm">
+          <div class="form-group">
+            <label>Bank Name</label>
+            <input type="text" id="bankName" placeholder="e.g. GTBank, Opay, Access" required>
+          </div>
+          <div class="form-group">
+            <label>Account Name</label>
+            <input type="text" id="accountName" placeholder="e.g. Ella's Empire" required>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" id="accountNumber" placeholder="e.g. 0123456789" required>
+          </div>
+          <button type="submit" class="btn-admin">Save Bank Details</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "../js/firebase-config.js";
+    import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const form = document.getElementById('paymentForm');
+    const bankNameInput = document.getElementById('bankName');
+    const accountNameInput = document.getElementById('accountName');
+    const accountNumberInput = document.getElementById('accountNumber');
+
+    async function loadSettings() {
+      const docRef = doc(db, "settings", "payment_info");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        bankNameInput.value = data.bankName || "";
+        accountNameInput.value = data.accountName || "";
+        accountNumberInput.value = data.accountNumber || "";
+      }
+    }
+    loadSettings();
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = form.querySelector('button');
+      btn.textContent = "Saving...";
+      try {
+        await setDoc(doc(db, "settings", "payment_info"), {
+          bankName: bankNameInput.value,
+          accountName: accountNameInput.value,
+          accountNumber: accountNumberInput.value
+        });
+        alert("✅ Bank details saved successfully to the database!");
+        btn.textContent = "Save Bank Details";
+      } catch (error) {
+        console.error("Error saving document: ", error);
+        alert("❌ Error saving details. Check the console.");
+        btn.textContent = "Save Bank Details";
+      }
+    });
+  </script>
+</body>
+</html>
