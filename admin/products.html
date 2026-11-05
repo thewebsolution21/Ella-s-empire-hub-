@@ -5,167 +5,178 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inventory | Ella's Admin</title>
   <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    body { background: #f4f6f8; font-family: sans-serif; margin: 0; padding: 40px; }
+    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    h1 { color: #111; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .btn { background: #C5A059; color: #111; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
+    .btn:hover { background: #111; color: #C5A059; }
+    
+    #errorBox { display: none; background: #ffdddd; color: #d8000c; padding: 20px; border: 2px solid #d8000c; border-radius: 5px; margin-bottom: 20px; font-weight: bold; font-size: 1.1rem; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+    .card { border: 1px solid #eee; border-radius: 8px; overflow: hidden; padding: 10px; text-align: center; }
+    .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
+    .card h4 { margin: 10px 0 5px; color: #111; }
+    .card p { margin: 0; color: #C5A059; font-weight: bold; }
+    
+    .nav-links { margin-bottom: 20px; }
+    .nav-links a { margin-right: 15px; text-decoration: none; color: #C5A059; font-weight: bold; }
+  </style>
 </head>
-<body class="admin-body">
+<body>
 
-  <div class="admin-wrapper">
-    <div class="sidebar">
-      <h2>👑 Ella's Admin</h2>
-      <a href="chat.html">Live Support</a>
-      <a href="orders.html">Orders</a>
-      <a href="products.html" class="active">Products (Inventory)</a>
-      <a href="payments.html">Payment Settings</a>
-      <a href="../index.html" class="logout">Logout ↗</a>
+  <div class="container">
+    <div class="nav-links">
+      <a href="chat.html">← Back to Live Support</a>
     </div>
+    
+    <h1>Add New Product</h1>
+    <div id="errorBox"></div>
 
-    <div class="main-content">
-      <h1>Product Inventory</h1>
-      <p class="page-desc">Add new hair, fashion items, or fragrances to the website.</p>
+    <div class="form-group">
+      <label>Product Name</label>
+      <input type="text" id="pName" placeholder="e.g. Raw Indian Wave">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="pCategory">
+        <option value="hair">Hair</option>
+        <option value="fashion">Fashion</option>
+        <option value="fragrance">Fragrance</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Price (₦)</label>
+      <input type="number" id="pPrice" placeholder="e.g. 45000">
+    </div>
+    <div class="form-group">
+      <label>Product Image</label>
+      <input type="file" id="pImage" accept="image/*">
+    </div>
+    
+    <button class="btn" id="saveBtn" onclick="saveProduct()">Save Product</button>
 
-      <div id="errorBox" style="display: none; background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; border-left: 5px solid #d8000c;"></div>
-
-      <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-        <div class="admin-card" style="flex: 1; min-width: 300px; max-width: 500px;">
-          <h3>Add New Product</h3>
-          <form id="productForm">
-            <div class="form-group">
-              <label>Product Name</label>
-              <input type="text" id="pName" placeholder="e.g. Raw Indian Wave" required>
-            </div>
-            <div class="form-group">
-              <label>Category</label>
-              <select id="pCategory" required>
-                <option value="hair">Hair Empire</option>
-                <option value="fashion">Luxury Empire (Fashion)</option>
-                <option value="fragrance">Fragrance</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Price (₦)</label>
-              <input type="number" id="pPrice" placeholder="e.g. 45000" required>
-            </div>
-            <div class="form-group">
-              <label>Product Image</label>
-              <input type="file" id="pImage" accept="image/*" required>
-              <img id="imagePreview" class="image-preview">
-            </div>
-            <button type="submit" class="btn-admin" id="saveBtn">Save Product</button>
-          </form>
-        </div>
-
-        <div class="admin-card" style="flex: 2; min-width: 300px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0;">Current Inventory</h3>
-            <button id="refreshBtn" style="padding: 8px 15px; background: #111; color: #C5A059; border: none; border-radius: 5px; cursor: pointer;">🔄 Refresh</button>
-          </div>
-          <div class="product-list" id="inventoryList">
-            <p style="color: #777;">Loading products...</p>
-          </div>
-        </div>
-      </div>
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #ddd;">
+    
+    <h1>Current Inventory</h1>
+    <div class="grid" id="inventoryList">
+      <p>Loading...</p>
     </div>
   </div>
 
-  <script type="module">
-    import { db } from "../js/firebase-config.js";
-    import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const form = document.getElementById('productForm');
-    const imageInput = document.getElementById('pImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const inventoryList = document.getElementById('inventoryList');
-    const saveBtn = document.getElementById('saveBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const errorBox = document.getElementById('errorBox');
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  
+  <script>
     let base64Image = "";
+    const errorBox = document.getElementById('errorBox');
 
-    imageInput.addEventListener('change', function(e) {
+    // 1. COMPRESS IMAGE TO BASE64 (Very small)
+    document.getElementById('pImage').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const MAX_SIZE = 500;
-          let width = img.width; let height = img.height;
-          if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
-          else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
-          canvas.width = width; canvas.height = height;
+          const MAX_SIZE = 300; // Very small size to guarantee DB acceptance
+          let width = img.width; 
+          let height = img.height;
+          
+          if (width > height) { 
+            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } 
+          } else { 
+            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } 
+          }
+          
+          canvas.width = width; 
+          canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          base64Image = canvas.toDataURL('image/jpeg', 0.6); 
-          imagePreview.src = base64Image;
-          imagePreview.style.display = 'block';
+          
+          // Convert to Base64 with 50% quality
+          base64Image = canvas.toDataURL('image/jpeg', 0.5); 
+          alert("Image compressed and ready to save!");
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      if(!base64Image) { alert("Please select an image first."); return; }
-      saveBtn.textContent = "Saving..."; saveBtn.disabled = true;
+    // 2. SAVE PRODUCT TO FIREBASE
+    function saveProduct() {
+      const name = document.getElementById('pName').value;
+      const category = document.getElementById('pCategory').value;
+      const price = document.getElementById('pPrice').value;
+
+      if (!name || !price || !base64Image) {
+        alert("Please fill in all fields and upload an image.");
+        return;
+      }
+
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = "Saving...";
+      btn.disabled = true;
       errorBox.style.display = 'none';
-      
-      try {
-        await addDoc(collection(db, "products"), {
-          name: document.getElementById('pName').value,
-          category: document.getElementById('pCategory').value,
-          price: Number(document.getElementById('pPrice').value),
-          image: base64Image,
-          createdAt: new Date()
-        });
-        alert("✅ Product saved successfully!");
-        form.reset(); 
-        imagePreview.style.display = 'none'; 
+
+      db.collection("products").add({
+        name: name,
+        category: category,
+        price: Number(price),
+        image: base64Image,
+        timestamp: Date.now()
+      }).then(() => {
+        alert("✅ Product Saved Successfully!");
+        document.getElementById('pName').value = "";
+        document.getElementById('pPrice').value = "";
+        document.getElementById('pImage').value = "";
         base64Image = "";
         loadProducts();
-      } catch (error) {
+      }).catch((error) => {
         errorBox.style.display = 'block';
-        errorBox.textContent = "❌ Error saving: " + error.message;
-      } finally {
-        saveBtn.textContent = "Save Product"; saveBtn.disabled = false;
-      }
-    });
-
-    async function loadProducts() {
-      inventoryList.innerHTML = "<p>Loading...</p>";
-      errorBox.style.display = 'none';
-      try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        inventoryList.innerHTML = "";
-        
-        if(querySnapshot.empty) { 
-          inventoryList.innerHTML = "<p style='color:#777;'>No products found in the database.</p>"; 
-          return; 
-        }
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const item = document.createElement('div');
-          item.className = 'product-item';
-          const imgSrc = data.image ? data.image : 'https://via.placeholder.com/200?text=No+Image';
-          
-          item.innerHTML = `
-            <img src="${imgSrc}" alt="${data.name}">
-            <div class="product-details">
-              <span>${data.category || 'Uncategorized'}</span>
-              <h4>${data.name || 'Unnamed Product'}</h4>
-              <p>₦${(data.price || 0).toLocaleString()}</p>
-            </div>
-          `;
-          inventoryList.appendChild(item);
-        });
-      } catch (error) {
-        errorBox.style.display = 'block';
-        errorBox.textContent = "❌ Database Read Error: " + error.message;
-        inventoryList.innerHTML = "";
-      }
+        errorBox.innerHTML = "❌ DATABASE ERROR: " + error.message;
+      }).finally(() => {
+        btn.textContent = "Save Product";
+        btn.disabled = false;
+      });
     }
 
-    refreshBtn.addEventListener('click', loadProducts);
+    // 3. LOAD PRODUCTS
+    function loadProducts() {
+      const list = document.getElementById('inventoryList');
+      list.innerHTML = "<p>Loading...</p>";
+
+      db.collection("products").get().then((snapshot) => {
+        list.innerHTML = "";
+        if (snapshot.empty) {
+          list.innerHTML = "<p>No products yet.</p>";
+          return;
+        }
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <img src="${data.image}" alt="${data.name}">
+            <h4>${data.name}</h4>
+            <p>₦${data.price.toLocaleString()}</p>
+          `;
+          list.appendChild(div);
+        });
+      }).catch((error) => {
+        errorBox.style.display = 'block';
+        errorBox.innerHTML = "❌ READ ERROR: " + error.message;
+      });
+    }
+
     loadProducts();
   </script>
 </body>
