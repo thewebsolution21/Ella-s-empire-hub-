@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders | Ella's Admin</title>
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .order-card { background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+    .order-img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+    .order-details { flex: 1; min-width: 250px; }
+    .order-details h4 { margin: 0 0 10px 0; font-size: 1.2rem; color: #111; }
+    .order-details p { margin: 5px 0; color: #555; font-size: 0.9rem; }
+    .order-status { padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 10px; }
+    .status-Pending { background: #fff3cd; color: #856404; }
+    .status-Paid { background: #d4edda; color: #155724; }
+    .status-Delivered { background: #cce5ff; color: #004085; }
+    .status-Cancelled { background: #f8d7da; color: #721c24; }
+    .action-btns { display: flex; flex-direction: column; gap: 10px; }
+    .action-btns button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.8rem; width: 120px; }
+    .btn-paid { background: #28a745; color: #fff; }
+    .btn-delivered { background: #007bff; color: #fff; }
+    .btn-cancel { background: #dc3545; color: #fff; }
+  </style>
+</head>
+<body class="admin-body">
+
+  <div class="admin-wrapper">
+    <div class="sidebar">
+      <h2>👑 Ella's Admin</h2>
+      <a href="chat.html">Live Support</a>
+      <a href="orders.html" class="active">Orders</a>
+      <a href="products.html">Products (Inventory)</a>
+      <a href="payments.html">Payment Settings</a>
+      <a href="../index.html" class="logout">Logout ↗</a>
+    </div>
+
+    <div class="main-content">
+      <h1>Customer Orders</h1>
+      <p class="page-desc">Review payment receipts and update status.</p>
+
+      <div id="ordersList">
+        <p style="color: #777;">Loading orders...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "../js/firebase-config.js";
+    import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const ordersList = document.getElementById('ordersList');
+    const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+      ordersList.innerHTML = "";
+      if (snapshot.empty) {
+        ordersList.innerHTML = "<p style='color:#777;'>No orders yet.</p>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const orderId = docSnap.id;
+        
+        const div = document.createElement('div');
+        div.className = 'order-card';
+        div.innerHTML = `
+          <img src="${data.receipt}" class="order-img" onclick="window.open('${data.receipt}', '_blank')" title="Click to view full receipt">
+          <div class="order-details">
+            <h4>Order ID: ${orderId.slice(-6).toUpperCase()}</h4>
+            <p><strong>Customer:</strong> ${data.customerName} (${data.phone})</p>
+            <p><strong>Address:</strong> ${data.address || 'N/A'}, ${data.city || ''}, ${data.state || ''}</p>
+            <p><strong>Items:</strong> ${data.items}</p>
+            <p><strong>Total:</strong> ₦${data.totalPrice.toLocaleString()}</p>
+            <div class="order-status status-${data.status}">${data.status}</div>
+          </div>
+          <div class="action-btns">
+            <button class="btn-paid" onclick="updateStatus('${orderId}', 'Paid')">Mark Paid</button>
+            <button class="btn-delivered" onclick="updateStatus('${orderId}', 'Delivered')">Delivered</button>
+            <button class="btn-cancel" onclick="updateStatus('${orderId}', 'Cancelled')">Cancel</button>
+          </div>
+        `;
+        ordersList.appendChild(div);
+      });
+    }, (error) => {
+      ordersList.innerHTML = `<p style="color:red;">Error loading orders: ${error.message}</p>`;
+    });
+
+    window.updateStatus = async function(orderId, newStatus) {
+      try {
+        const orderRef = doc(db, "orders", orderId);
+        await updateDoc(orderRef, { status: newStatus });
+      } catch (e) {
+        alert("Error updating status: " + e.message);
+      }
+    }
+  </script>
+</body>
+</html>

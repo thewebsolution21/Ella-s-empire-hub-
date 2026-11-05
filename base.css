@@ -1,0 +1,39 @@
+/* --- ELLA'S EMPIRE: BASE STYLES --- */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap');
+
+:root {
+  /* Luxury Dark Palette */
+  --bg: #050505;
+  --surface: #0d0d0d;
+  --surface-light: #1a1a1a;
+  --gold: #C5A059;
+  --gold-bright: #E6C87A;
+  --text: #F9F9F9;
+  --muted: #999999;
+  --hair-pink: #E8A2B6;
+  
+  /* Typography */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-sans: 'Montserrat', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  font-weight: 300;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; color: inherit; transition: 0.3s ease; }
+img { max-width: 100%; display: block; }
+ul { list-style: none; }
+
+/* Global Headings */
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height: 1.2; }
+.section-label {
+  display: block; font-size: 0.7rem; letter-spacing: 4px;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 15px; font-weight: 500;
+}

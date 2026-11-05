@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ella's Empire | Luxury You Deserve</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    /* CHAT STYLES */
+    .chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; background: #0d0d0d; border: 1px solid #C5A059; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 10000; overflow: hidden; }
+    .chat-widget.active { display: flex; }
+    .chat-header { background: #1a1a1a; padding: 15px 20px; border-bottom: 1px solid rgba(197, 160, 89, 0.2); display: flex; justify-content: space-between; align-items: center; }
+    .chat-header h4 { color: #C5A059; font-size: 1.1rem; margin: 0; font-family: 'Cormorant Garamond', serif; }
+    .chat-header button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+    .chat-body { padding: 20px; height: 250px; overflow-y: auto; background: #050505; display: flex; flex-direction: column; }
+    .chat-msg { margin-bottom: 15px; font-size: 0.85rem; font-family: 'Montserrat', sans-serif; max-width: 85%; padding: 10px; border-radius: 8px; line-height: 1.4; }
+    .chat-msg.bot { color: #E6C87A; background: rgba(197, 160, 89, 0.1); align-self: flex-start; }
+    .chat-msg.user { background: #333; color: #fff; align-self: flex-end; }
+    .chat-input { display: none; padding: 15px; background: #1a1a1a; border-top: 1px solid rgba(197, 160, 89, 0.2); }
+    .chat-input.active { display: flex; }
+    .chat-input input { flex: 1; background: #050505; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 4px; outline: none; }
+    .chat-input button { background: #C5A059; border: none; color: #000; padding: 10px 15px; margin-left: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .name-form { padding: 20px; background: #1a1a1a; display: flex; flex-direction: column; gap: 10px; }
+    .name-form input { padding: 12px; background: #050505; border: 1px solid #C5A059; color: #fff; border-radius: 4px; outline: none; }
+    .name-form button { padding: 12px; background: #C5A059; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+    .floating-support { display: flex !important; }
+    
+    /* SHOP STYLES */
+    .shop-section { padding: 100px 5%; background: #fafafa; text-align: center; }
+    .filter-btns { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; flex-wrap: wrap; }
+    .filter-btn { padding: 10px 25px; background: transparent; border: 1px solid #C5A059; color: #C5A059; cursor: pointer; border-radius: 30px; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; transition: 0.3s; }
+    .filter-btn.active, .filter-btn:hover { background: #C5A059; color: #fff; }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; max-width: 1400px; margin: 0 auto; }
+    .shop-card { background: #fff; border: 1px solid #eee; border-radius: 10px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; }
+    .shop-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+    .shop-card img { width: 100%; height: 350px; object-fit: cover; border-bottom: 1px solid #eee; }
+    .shop-card-info { padding: 20px; text-align: left; display: flex; flex-direction: column; flex: 1; }
+    .shop-card-info span { font-size: 0.7rem; color: #C5A059; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+    .shop-card-info h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin: 5px 0 10px; color: #111; }
+    .shop-card-info p { color: #333; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; }
+    .order-btn { margin-top: auto; background: #111; color: #C5A059; padding: 12px; text-align: center; font-weight: bold; border: none; cursor: pointer; border-radius: 5px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; width: 100%; }
+    .order-btn:hover { background: #C5A059; color: #111; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">👑 ELLA'S EMPIRE</div>
+    <nav class="nav-links">
+      <a href="#shop">Shop All</a>
+      <a href="#empires">Categories</a>
+      <a href="cart.html" class="btn" style="padding: 10px 20px;" id="cartLink">Cart (0)</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-text">
+      <span class="section-label">The House of Ella</span>
+      <h1>Luxury You<br><em>Deserve.</em></h1>
+      <p>Quality you can trust. Discover our premium hair blends, bespoke fashion, and exclusive fragrances delivered nationwide.</p>
+      <a href="#shop" class="btn">Shop The Collection</a>
+    </div>
+    <div class="hero-image" style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80');"></div>
+  </section>
+
+  <!-- THE 3 EMPIRES -->
+  <section class="empires" id="empires" style="padding: 80px 5%; background: #fff; text-align: center;">
+    <span class="section-label" style="display: block; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; color: #C5A059; margin-bottom: 10px;">Shop By Category</span>
+    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 3rem; margin-bottom: 40px; color: #111;">The Three Empires</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto;">
+      
+      <div style="position: relative; height: 500px; border-radius: 10px; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=600&q=80" alt="Hair" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #fff; margin-bottom: 15px;">Hair Empire</h3>
+          <a href="#shop" class="btn btn-pink" onclick="filterCategory('hair', event)" style="display: inline-block; padding: 10px 20px; border: 1px solid #E8A2B6; color: #E8A2B6; text-decoration: none; text-transform: uppercase; font-size: 0.8rem; font-weight: bold;">Shop Hair</a>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 500px; border-radius: 10px; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=600&q=80" alt="Fashion" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #fff; margin-bottom: 15px;">Luxury Empire</h3>
+          <a href="#shop" class="btn" onclick="filterCategory('fashion', event)" style="display: inline-block; padding: 10px 20px; border: 1px solid #C5A059; color: #C5A059; text-decoration: none; text-transform: uppercase; font-size: 0.8rem; font-weight: bold;">Shop Fashion</a>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 500px; border-radius: 10px; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=600&q=80" alt="Fragrance" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #fff; margin-bottom: 15px;">Fragrance</h3>
+          <a href="#shop" class="btn" onclick="filterCategory('fragrance', event)" style="display: inline-block; padding: 10px 20px; border: 1px solid #C5A059; color: #C5A059; text-decoration: none; text-transform: uppercase; font-size: 0.8rem; font-weight: bold;">Shop Fragrance</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SHOP SECTION -->
+  <section class="shop-section" id="shop">
+    <span class="section-label">Latest Arrivals</span>
+    <h2>Shop The Collection</h2>
+    <div class="filter-btns">
+      <button class="filter-btn active" onclick="filterCategory('all', event)">All</button>
+      <button class="filter-btn" onclick="filterCategory('hair', event)">Hair</button>
+      <button class="filter-btn" onclick="filterCategory('fashion', event)">Fashion</button>
+      <button class="filter-btn" onclick="filterCategory('fragrance', event)">Fragrance</button>
+    </div>
+    <div class="shop-grid" id="homepageProducts">
+      <p style="text-align:center; width:100%; color:#777;">Loading products...</p>
+    </div>
+  </section>
+
+  <footer style="position: relative;">
+    <div>
+      <div class="logo" style="font-size: 1.2rem; margin-bottom: 10px;">👑 ELLA'S EMPIRE</div>
+      <p style="color: #999; font-size: 0.8rem;">© 2026 Ella's Empire. All Rights Reserved. </p>
+    </div>
+    <div style="text-align: right;">
+      <a href="./admin/index.html" style="color: #C5A059; font-size: 0.8rem; text-decoration: none; border: 1px solid #C5A059; padding: 5px 10px; border-radius: 4px;">🔒 Staff Portal</a>
+    </div>
+  </footer>
+
+  <!-- CHAT WIDGET -->
+  <a href="#" class="floating-support" id="chatToggle">💬</a>
+
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-header">
+      <h4>👑 Ella's Concierge</h4>
+      <button id="closeChat">✕</button>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-msg bot">Hello! Welcome to Ella's Empire. Please enter your name below to start chatting.</div>
+    </div>
+    <div class="name-form" id="nameForm">
+      <input type="text" id="customerName" placeholder="Enter your name..." required>
+      <button id="saveNameBtn">Start Chat</button>
+    </div>
+    <div class="chat-input" id="chatInputArea">
+      <input type="text" id="chatInput" placeholder="Type your message...">
+      <button id="sendChat">Send</button>
+    </div>
+  </div>
+
+  <!-- LOAD FIREBASE COMPAT VERSION -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  
+  <!-- LOAD CONFIG -->
+  <script src="js/firebase-config.js"></script>
+
+  <!-- APP LOGIC -->
+  <script>
+    let allProducts = [];
+    const productGrid = document.getElementById('homepageProducts');
+    const cartLink = document.getElementById('cartLink'); 
+    let cart = JSON.parse(localStorage.getItem('ella_cart')) || [];
+
+    function updateCartCount() { 
+      if (cartLink) cartLink.innerText = `Cart (${cart.length})`; 
+    }
+    updateCartCount();
+
+    // LOAD PRODUCTS
+    db.collection("products").get().then((querySnapshot) => {
+      allProducts = [];
+      querySnapshot.forEach((doc) => { allProducts.push({ id: doc.id, ...doc.data() }); });
+      renderProducts('all');
+    }).catch((error) => { console.error("Error loading products:", error); });
+
+    function renderProducts(category) {
+      productGrid.innerHTML = "";
+      let filtered = category === 'all' ? allProducts : allProducts.filter(p => p.category === category);
+      if(filtered.length === 0) { productGrid.innerHTML = "<p style='text-align:center; width:100%; color:#777;'>No products found.</p>"; return; }
+      filtered.forEach((data) => {
+        const card = document.createElement('div');
+        card.className = 'shop-card';
+        card.innerHTML = `
+          <img src="${data.image}" alt="${data.name}">
+          <div class="shop-card-info">
+            <span>${data.category}</span><h3>${data.name}</h3><p>₦${data.price.toLocaleString()}</p>
+            <button class="order-btn" onclick="addToCart('${data.id}')">Add to Cart</button>
+          </div>`;
+        productGrid.appendChild(card);
+      });
+    }
+
+    function filterCategory(cat, e) {
+      if(e) { document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); }
+      renderProducts(cat);
+    }
+
+    function addToCart(id) {
+      const product = allProducts.find(p => p.id === id);
+      cart.push(product);
+      localStorage.setItem('ella_cart', JSON.stringify(cart));
+      updateCartCount();
+      alert(`${product.name} added to cart!`);
+    }
+
+    // CHAT LOGIC
+    const chatToggle = document.getElementById('chatToggle');
+    const chatWidget = document.getElementById('chatWidget');
+    const closeChat = document.getElementById('closeChat');
+    const sendChat = document.getElementById('sendChat');
+    const chatInput = document.getElementById('chatInput');
+    const chatBody = document.getElementById('chatBody');
+    const nameForm = document.getElementById('nameForm');
+    const customerNameInput = document.getElementById('customerName');
+    const saveNameBtn = document.getElementById('saveNameBtn');
+    const chatInputArea = document.getElementById('chatInputArea');
+
+    let sessionId = localStorage.getItem('ella_chat_session');
+    if (!sessionId) {
+      sessionId = 'user_' + Math.random().toString(36).substring(2, 8);
+      localStorage.setItem('ella_chat_session', sessionId);
+    }
+    
+    let customerName = localStorage.getItem('ella_chat_name');
+    if (customerName) {
+      nameForm.style.display = 'none';
+      chatInputArea.classList.add('active');
+    }
+
+    saveNameBtn.addEventListener('click', () => {
+      const name = customerNameInput.value.trim();
+      if(name.length > 2) {
+        localStorage.setItem('ella_chat_name', name);
+        customerName = name;
+        nameForm.style.display = 'none';
+        chatInputArea.classList.add('active');
+      } else { alert("Please enter a valid name."); }
+    });
+
+    chatToggle.addEventListener('click', function(e) { e.preventDefault(); chatWidget.classList.toggle('active'); });
+    closeChat.addEventListener('click', () => chatWidget.classList.remove('active'));
+
+    sendChat.addEventListener('click', function() {
+      const text = chatInput.value.trim();
+      if(text !== "" && customerName) {
+        chatInput.value = ""; 
+        
+        db.collection("chats").add({
+          sessionId: sessionId, 
+          sender: "buyer", 
+          senderName: customerName,
+          text: text, 
+          timestamp: Date.now() 
+        }).catch((e) => {
+          alert("FAILED TO SEND. Reason: " + e.message); 
+        });
+      }
+    });
+
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat.click(); });
+
+    // LIVE LISTENER (NO ORDERBY TO PREVENT CRASHES)
+    db.collection("chats").where("sessionId", "==", sessionId).onSnapshot((snapshot) => {
+      chatBody.innerHTML = `<div class="chat-msg bot">Hello ${customerName || 'there'}! How can we help you today?</div>`;
+      
+      const messages = [];
+      snapshot.forEach(doc => messages.push(doc.data()));
+      
+      // Sort manually in the browser
+      messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+      messages.forEach(data => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-msg ${data.sender === 'buyer' ? 'user' : 'bot'}`;
+        msgDiv.textContent = data.text;
+        chatBody.appendChild(msgDiv);
+      });
+      
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }, (error) => {
+      // If it fails, show a popup so we know!
+      alert("CHAT ERROR: " + error.message);
+    });
+  </script>
+</body>
+</html>

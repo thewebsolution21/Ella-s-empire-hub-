@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Support — Ella's Admin</title>
+  <link rel="stylesheet" href="../css/admin.css" />
+  <style>
+    body { background-color: #f4f6f8; }
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-sidebar { width: 250px; background: #0a0a0a; color: #fff; padding: 30px 20px; display: flex; flex-direction: column; }
+    .admin-sidebar h2 { font-family: 'Cormorant Garamond', serif; color: #C5A059; font-size: 1.6rem; margin-bottom: 40px; text-align: center; }
+    .admin-sidebar a { color: #999; text-decoration: none; padding: 14px 18px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; transition: 0.3s; display: block; }
+    .admin-sidebar a:hover, .admin-sidebar a.active { background: rgba(197, 160, 89, 0.15); color: #C5A059; }
+    .admin-main { flex: 1; padding: 40px; max-width: 1000px; margin: 0 auto; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #eaeaea; padding-bottom: 20px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #111; margin: 0; }
+    .logout-btn { background: #111; color: #C5A059; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .thread-card { background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .thread-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+    .thread-header h3 { margin: 0; color: #111; font-size: 1.2rem; }
+    .msg-bubble { max-width: 75%; padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; font-size: 0.95rem; line-height: 1.5; }
+    .msg-bubble.buyer { background: #f0f0f0; color: #111; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg-bubble.admin { background: #C5A059; color: #111; align-self: flex-end; border-bottom-right-radius: 4px; margin-left: auto; }
+    .msg-time { font-size: 0.7rem; color: #999; display: block; margin-top: 5px; text-align: right; }
+    .reply-box { display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+    .reply-box input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
+    .reply-box button { padding: 12px 25px; background: #C5A059; color: #111; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+    .reply-box button:hover { background: #111; color: #C5A059; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <h2>👑 ELLA'S ADMIN</h2>
+      <a href="chat.html" class="active">💬 Live Support</a>
+      <a href="orders.html">📦 Orders</a>
+      <a href="products.html">🛍️ Products</a>
+      <a href="payments.html">🏦 Payment Settings</a>
+      <a href="../index.html" style="margin-top: auto; color: #ff6b6b;">Logout ↗</a>
+    </div>
+
+    <div class="admin-main">
+      <div class="admin-header">
+        <h1>Customer Messages</h1>
+        <span style="color: #28a745; font-weight: bold; font-size: 0.8rem;">🟢 Live Connection</span>
+      </div>
+
+      <div id="messagesList">
+        <p style="color:#777;">Connecting to live chat...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  
+  <script>
+    const messagesList = document.getElementById('messagesList');
+
+    // LIVE LISTENER (onSnapshot)
+    db.collection("chats").orderBy("timestamp", "asc").onSnapshot((snapshot) => {
+      if (snapshot.empty) {
+        messagesList.innerHTML = "<p style='color:#777;'>No messages found.</p>";
+        return;
+      }
+
+      // Group messages by sessionId
+      const threads = {};
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (!threads[data.sessionId]) {
+          threads[data.sessionId] = {
+            senderName: data.senderName || 'Customer',
+            messages: []
+          };
+        }
+        threads[data.sessionId].messages.push(data);
+      });
+
+      messagesList.innerHTML = "";
+
+      // Render each thread
+      for (const [sessionId, thread] of Object.entries(threads)) {
+        const card = document.createElement('div');
+        card.className = 'thread-card';
+        
+        let messagesHtml = "";
+        thread.messages.forEach(msg => {
+          const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          messagesHtml += `
+            <div class="msg-bubble ${msg.sender}">
+              ${msg.text}
+              <span class="msg-time">${time}</span>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="thread-header">
+            <h3>👤 ${thread.senderName}</h3>
+          </div>
+          <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+            ${messagesHtml}
+          </div>
+          <div class="reply-box">
+            <input type="text" id="reply-${sessionId}" placeholder="Type a reply...">
+            <button onclick="sendReply('${sessionId}', 'reply-${sessionId}')">Send</button>
+          </div>
+        `;
+        messagesList.appendChild(card);
+      }
+    }, (error) => {
+      messagesList.innerHTML = `<p style="color:red; font-weight:bold;">❌ ERROR: ${error.message} <br>Check Firebase Rules.</p>`;
+    });
+
+    function sendReply(sessionId, inputId) {
+      const input = document.getElementById(inputId);
+      const text = input.value.trim();
+      if(!text) return;
+
+      input.value = "Sending...";
+
+      db.collection("chats").add({
+        sessionId: sessionId,
+        sender: "admin",
+        senderName: "Ella's Support",
+        text: text,
+        timestamp: Date.now()
+      }).then(() => {
+        input.value = ""; // Clear input (the live listener will update the UI automatically)
+      }).catch((error) => {
+        alert("Error sending reply: " + error.message);
+        input.value = "";
+      });
+    }
+  </script>
+</body>
+</html>

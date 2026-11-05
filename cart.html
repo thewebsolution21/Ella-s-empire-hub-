@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | Ella's Empire</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <style>
+    body { background: #fafafa; padding-top: 100px; }
+    .checkout-container { max-width: 1000px; margin: 0 auto; padding: 20px; display: flex; gap: 30px; flex-wrap: wrap; }
+    .cart-items { flex: 2; background: #fff; padding: 30px; border-radius: 10px; border: 1px solid #eee; }
+    .payment-box { flex: 1; background: #fff; padding: 30px; border-radius: 10px; border: 1px solid #eee; height: fit-content; }
+    h2 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; margin-bottom: 20px; color: #111; }
+    .cart-item { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #eee; padding: 15px 0; }
+    .cart-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 5px; }
+    .cart-item-info { flex: 1; }
+    .cart-item-info h4 { margin: 0 0 5px 0; color: #111; }
+    .cart-item-info p { margin: 0; color: #C5A059; font-weight: bold; }
+    .remove-btn { background: #ff4d4d; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+    .total { text-align: right; font-size: 1.5rem; font-weight: bold; color: #111; margin-top: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; color: #333; }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
+    .form-group textarea { resize: vertical; height: 80px; }
+    .bank-details { background: #f4f6f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ddd; }
+    .bank-details p { margin: 5px 0; font-size: 0.9rem; color: #333; }
+    .btn-checkout { width: 100%; padding: 15px; background: #C5A059; color: #111; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; text-transform: uppercase; }
+    .btn-checkout:hover { background: #111; color: #C5A059; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">👑 ELLA'S EMPIRE</div>
+    <nav class="nav-links">
+      <a href="index.html">Back to Shop</a>
+    </nav>
+  </header>
+
+  <div class="checkout-container">
+    <div class="cart-items">
+      <h2>Your Cart</h2>
+      <div id="cartList"></div>
+      <div class="total" id="cartTotal">Total: ₦0</div>
+    </div>
+
+    <div class="payment-box">
+      <h2>Checkout</h2>
+      
+      <div class="bank-details" id="bankDetails">
+        <p><strong>Bank:</strong> Loading...</p>
+        <p><strong>Account Name:</strong> Loading...</p>
+        <p><strong>Account No:</strong> Loading...</p>
+      </div>
+
+      <form id="checkoutForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="custName" required placeholder="e.g. Jane Doe">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <input type="tel" id="custPhone" required placeholder="e.g. 08012345678">
+        </div>
+        <div class="form-group">
+          <label>Delivery Address</label>
+          <textarea id="custAddress" required placeholder="House number, street name..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="custCity" required placeholder="e.g. Ikeja">
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="custState" required placeholder="e.g. Lagos">
+        </div>
+        <div class="form-group">
+          <label>Upload Payment Receipt (Screenshot)</label>
+          <input type="file" id="receiptImg" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn-checkout">Submit Order</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "./js/firebase-config.js";
+    import { collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let cart = JSON.parse(localStorage.getItem('ella_cart')) || [];
+    let receiptBase64 = "";
+
+    const cartList = document.getElementById('cartList');
+    const cartTotal = document.getElementById('cartTotal');
+    const bankDetails = document.getElementById('bankDetails');
+
+    function renderCart() {
+      cartList.innerHTML = "";
+      let total = 0;
+      
+      if(cart.length === 0) {
+        cartList.innerHTML = "<p>Your cart is empty. <a href='index.html'>Go shopping</a></p>";
+        document.getElementById('checkoutForm').style.display = 'none';
+        return;
+      }
+
+      cart.forEach((item, index) => {
+        total += item.price;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.name}">
+          <div class="cart-item-info">
+            <h4>${item.name}</h4>
+            <p>₦${item.price.toLocaleString()}</p>
+          </div>
+          <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+        `;
+        cartList.appendChild(div);
+      });
+      cartTotal.innerText = `Total: ₦${total.toLocaleString()}`;
+    }
+
+    window.removeItem = function(index) {
+      cart.splice(index, 1);
+      localStorage.setItem('ella_cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    async function loadBankDetails() {
+      try {
+        const docRef = doc(db, "settings", "payment_info");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          bankDetails.innerHTML = `
+            <p><strong>Bank:</strong> ${data.bankName}</p>
+            <p><strong>Account Name:</strong> ${data.accountName}</p>
+            <p><strong>Account No:</strong> ${data.accountNumber}</p>
+          `;
+        } else {
+          bankDetails.innerHTML = "<p style='color:red;'>Bank details not set by admin yet.</p>";
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    document.getElementById('receiptImg').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 600;
+          let width = img.width; let height = img.height;
+          if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
+          else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          receiptBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if(!receiptBase64) { alert("Please upload a receipt image."); return; }
+
+      const name = document.getElementById('custName').value;
+      const phone = document.getElementById('custPhone').value;
+      const address = document.getElementById('custAddress').value;
+      const city = document.getElementById('custCity').value;
+      const state = document.getElementById('custState').value;
+      
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      const itemsString = cart.map(i => `${i.name} (₦${i.price})`).join(', ');
+
+      const btn = document.querySelector('.btn-checkout');
+      btn.innerText = "Processing...";
+      btn.disabled = true;
+
+      try {
+        await addDoc(collection(db, "orders"), {
+          customerName: name,
+          phone: phone,
+          address: address,
+          city: city,
+          state: state,
+          items: itemsString,
+          totalPrice: total,
+          receipt: receiptBase64,
+          status: "Pending",
+          timestamp: Date.now()
+        });
+
+        // THE CORRECT WHATSAPP NUMBER IS NOW HERE
+        const waNumber = "2349025278180"; 
+        const waText = `Hello Ella, I just placed an order.\nName: ${name}\nPhone: ${phone}\nAddress: ${address}, ${city}, ${state}\nItems: ${itemsString}\nTotal: ₦${total}\nI have attached my payment receipt.`;
+        
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`, '_blank');
+
+        localStorage.removeItem('ella_cart');
+        alert("Order placed successfully! Please send the receipt on WhatsApp.");
+        window.location.href = "index.html";
+
+      } catch(error) {
+        alert("Error placing order: " + error.message);
+        btn.innerText = "Submit Order";
+        btn.disabled = false;
+      }
+    });
+
+    renderCart();
+    loadBankDetails();
+  </script>
+</body>
+</html>

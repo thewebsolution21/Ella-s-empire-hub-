@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory | Ella's Admin</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <div class="admin-wrapper">
+    <div class="sidebar">
+      <h2>👑 Ella's Admin</h2>
+      <a href="chat.html">Live Support</a>
+      <a href="orders.html">Orders</a>
+      <a href="products.html" class="active">Products (Inventory)</a>
+      <a href="payments.html">Payment Settings</a>
+      <a href="../index.html" class="logout">Logout ↗</a>
+    </div>
+
+    <div class="main-content">
+      <h1>Product Inventory</h1>
+      <p class="page-desc">Add new hair, fashion items, or fragrances to the website.</p>
+
+      <div id="errorBox" style="display: none; background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; border-left: 5px solid #d8000c;"></div>
+
+      <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        <div class="admin-card" style="flex: 1; min-width: 300px; max-width: 500px;">
+          <h3>Add New Product</h3>
+          <form id="productForm">
+            <div class="form-group">
+              <label>Product Name</label>
+              <input type="text" id="pName" placeholder="e.g. Raw Indian Wave" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="pCategory" required>
+                <option value="hair">Hair Empire</option>
+                <option value="fashion">Luxury Empire (Fashion)</option>
+                <option value="fragrance">Fragrance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Price (₦)</label>
+              <input type="number" id="pPrice" placeholder="e.g. 45000" required>
+            </div>
+            <div class="form-group">
+              <label>Product Image</label>
+              <input type="file" id="pImage" accept="image/*" required>
+              <img id="imagePreview" class="image-preview">
+            </div>
+            <button type="submit" class="btn-admin" id="saveBtn">Save Product</button>
+          </form>
+        </div>
+
+        <div class="admin-card" style="flex: 2; min-width: 300px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Current Inventory</h3>
+            <button id="refreshBtn" style="padding: 8px 15px; background: #111; color: #C5A059; border: none; border-radius: 5px; cursor: pointer;">🔄 Refresh</button>
+          </div>
+          <div class="product-list" id="inventoryList">
+            <p style="color: #777;">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "../js/firebase-config.js";
+    import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const form = document.getElementById('productForm');
+    const imageInput = document.getElementById('pImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const inventoryList = document.getElementById('inventoryList');
+    const saveBtn = document.getElementById('saveBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const errorBox = document.getElementById('errorBox');
+    let base64Image = "";
+
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 500;
+          let width = img.width; let height = img.height;
+          if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
+          else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          base64Image = canvas.toDataURL('image/jpeg', 0.6); 
+          imagePreview.src = base64Image;
+          imagePreview.style.display = 'block';
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if(!base64Image) { alert("Please select an image first."); return; }
+      saveBtn.textContent = "Saving..."; saveBtn.disabled = true;
+      errorBox.style.display = 'none';
+      
+      try {
+        await addDoc(collection(db, "products"), {
+          name: document.getElementById('pName').value,
+          category: document.getElementById('pCategory').value,
+          price: Number(document.getElementById('pPrice').value),
+          image: base64Image,
+          createdAt: new Date()
+        });
+        alert("✅ Product saved successfully!");
+        form.reset(); 
+        imagePreview.style.display = 'none'; 
+        base64Image = "";
+        loadProducts();
+      } catch (error) {
+        errorBox.style.display = 'block';
+        errorBox.textContent = "❌ Error saving: " + error.message;
+      } finally {
+        saveBtn.textContent = "Save Product"; saveBtn.disabled = false;
+      }
+    });
+
+    async function loadProducts() {
+      inventoryList.innerHTML = "<p>Loading...</p>";
+      errorBox.style.display = 'none';
+      try {
+        const querySnapshot = await getDocs(collection(db, "products"));
+        inventoryList.innerHTML = "";
+        
+        if(querySnapshot.empty) { 
+          inventoryList.innerHTML = "<p style='color:#777;'>No products found in the database.</p>"; 
+          return; 
+        }
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          const imgSrc = data.image ? data.image : 'https://via.placeholder.com/200?text=No+Image';
+          
+          item.innerHTML = `
+            <img src="${imgSrc}" alt="${data.name}">
+            <div class="product-details">
+              <span>${data.category || 'Uncategorized'}</span>
+              <h4>${data.name || 'Unnamed Product'}</h4>
+              <p>₦${(data.price || 0).toLocaleString()}</p>
+            </div>
+          `;
+          inventoryList.appendChild(item);
+        });
+      } catch (error) {
+        errorBox.style.display = 'block';
+        errorBox.textContent = "❌ Database Read Error: " + error.message;
+        inventoryList.innerHTML = "";
+      }
+    }
+
+    refreshBtn.addEventListener('click', loadProducts);
+    loadProducts();
+  </script>
+</body>
+</html>
